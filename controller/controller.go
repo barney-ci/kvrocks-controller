@@ -188,7 +188,8 @@ func (c *Controller) addCluster(namespace, clusterName string) {
 
 	cluster := NewClusterChecker(c.clusterStore, namespace, clusterName).
 		WithPingInterval(time.Duration(c.config.FailOver.PingIntervalSeconds) * time.Second).
-		WithMaxFailureCount(c.config.FailOver.MaxPingCount)
+		WithMaxFailureCount(c.config.FailOver.MaxPingCount).
+		WithDisableAutomaticFailover(c.config.FailOver.Disabled)
 	cluster.Start()
 
 	c.mu.Lock()
