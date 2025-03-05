@@ -1,0 +1,11 @@
+reponame: barney.ci/kvrocks-controller
+x-bar:
+  version: production
+  target-branch-re: ^main$
+x-github-bridge:
+  reviews:
+    - image: test
+      events:
+        - type: pull_request
+        - type: push
+          branch-re: ^main$
