@@ -1,0 +1,29 @@
+generators:
+  go: barney.ci/golang%generator
+
+images:
+  internal/runtime:
+    units:
+      - image: .%go/static
+      - image: barney.ci/alpine%pkg/alpine-base
+      - image: barney.ci/alpine%pkg/ca-certificates
+      - image: barney.ci/alpine%pkg/tini
+      - image: barney.ci/alpine%pkg/busybox
+      - image: barney.ci/alpine%apk-finalizers
+
+  docker:
+    metadata:
+      docker:
+        entrypoint: [ /sbin/tini, -- ]
+        cmd: [ /usr/bin/server, -c, /var/lib/kvctl/config.yaml ]
+    units:
+      - image: .%internal/runtime
+
+  test/docker:
+    description: |
+      Tests if target binaries are available and runnable in a docker image
+      snapshot
+    units:
+      - floor: .%docker
+        sources: []
+        build: /usr/bin/server --help
