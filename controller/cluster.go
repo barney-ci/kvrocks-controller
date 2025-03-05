@@ -38,8 +38,9 @@ var (
 )
 
 type ClusterCheckOptions struct {
-	pingInterval    time.Duration
-	maxFailureCount int64
+	pingInterval             time.Duration
+	maxFailureCount          int64
+	disableAutomaticFailover bool
 }
 
 type ClusterChecker struct {
@@ -104,6 +105,11 @@ func (c *ClusterChecker) WithMaxFailureCount(count int64) *ClusterChecker {
 	return c
 }
 
+func (c *ClusterChecker) WithDisableAutomaticFailover(disabled bool) *ClusterChecker {
+	c.options.disableAutomaticFailover = disabled
+	return c
+}
+
 func (c *ClusterChecker) probeNode(ctx context.Context, node store.Node) (int64, error) {
 	clusterInfo, err := node.GetClusterInfo(ctx)
 	if err != nil {
@@ -142,6 +148,10 @@ func (c *ClusterChecker) increaseFailureCount(shardIndex int, node store.Node) i
 		zap.Bool("is_master", node.IsMaster()),
 		zap.String("addr", node.Addr()))
 	if count%c.options.maxFailureCount == 0 {
+		if c.options.disableAutomaticFailover {
+			log.Warn("Not promoting a new primary because automatic failover is disabled")
+			return count
+		}
 		cluster, err := c.clusterStore.GetCluster(c.ctx, c.namespace, c.clusterName)
 		if err != nil {
 			log.Error("Failed to get the clusterName info", zap.Error(err))
